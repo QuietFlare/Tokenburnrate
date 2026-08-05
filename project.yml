@@ -1,0 +1,53 @@
+name: TokenBurnrate
+options:
+  bundleIdPrefix: net.quietflare
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.0
+
+targets:
+  TokenBurnrate:
+    type: application
+    platform: macOS
+    sources:
+      - TokenBurnrate
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.quietflare.tokenburnrate
+        CODE_SIGN_ENTITLEMENTS: TokenBurnrate/TokenBurnrate.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_LSUIElement: false
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: TokenBurnrate for Claude
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+    dependencies:
+      - target: TokenBurnrateWidget
+        embed: true
+
+  TokenBurnrateWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - TokenBurnrateWidget
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.quietflare.tokenburnrate.widget
+        CODE_SIGN_ENTITLEMENTS: TokenBurnrateWidget/TokenBurnrateWidget.entitlements
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: TokenBurnrate for Claude
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+    info:
+      path: TokenBurnrateWidget/Info.plist
+      properties:
+        CFBundleDisplayName: TokenBurnrate for Claude
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
