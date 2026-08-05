@@ -39,6 +39,10 @@ public struct OfficialUsage: Codable {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: bin)
         process.arguments = ["-p", "/usage"]
+        let binDir = (bin as NSString).deletingLastPathComponent
+        var env = ProcessInfo.processInfo.environment
+        env["PATH"] = "\(binDir):/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
+        process.environment = env
         let neutralDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("TokenBurnrate", isDirectory: true)
         try? FileManager.default.createDirectory(at: neutralDir, withIntermediateDirectories: true)
@@ -59,27 +63,40 @@ public struct OfficialUsage: Codable {
     }
 
     private static func claudeBinary() -> String? {
+        let fm = FileManager.default
         let home = NSHomeDirectory()
-        let candidates = [
+
+        var candidates = [
             "/opt/homebrew/bin/claude",
             "/usr/local/bin/claude",
             "\(home)/.local/bin/claude",
             "\(home)/.claude/local/claude",
         ]
-        if let found = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) {
+        // nvm-managed npm globals: ~/.nvm/versions/node/*/bin/claude (newest first)
+        let nvmDir = "\(home)/.nvm/versions/node"
+        if let versions = try? fm.contentsOfDirectory(atPath: nvmDir) {
+            for v in versions.sorted(by: { $0.compare($1, options: .numeric) == .orderedDescending }) {
+                candidates.append("\(nvmDir)/\(v)/bin/claude")
+            }
+        }
+        if let found = candidates.first(where: { fm.isExecutableFile(atPath: $0) }) {
             return found
         }
+
+        // Last resort: interactive login shell so nvm/asdf init in .zshrc runs.
         let which = Process()
         which.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        which.arguments = ["-lc", "which claude"]
+        which.arguments = ["-lic", "which claude"]
         let pipe = Pipe()
         which.standardOutput = pipe
         which.standardError = Pipe()
         guard (try? which.run()) != nil else { return nil }
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         which.waitUntilExit()
-        let path = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        return path.isEmpty ? nil : path
+        let path = String(decoding: data, as: UTF8.self)
+            .split(separator: "\n").last.map(String.init)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return fm.isExecutableFile(atPath: path) ? path : nil
     }
 
     static func parse(_ output: String) -> OfficialUsage? {
@@ -114,9 +131,9 @@ public struct OfficialUsage: Codable {
         cal.timeZone = tz
         let lower = text.lowercased().trimmingCharacters(in: .whitespaces)
 
-        guard let tm = lower.firstMatch(of: /(\d{1,2}):(\d{2})\s*(am|pm)/) else { return nil }
+        guard let tm = lower.firstMatch(of: /(\d{1,2})(?::(\d{2}))?\s*(am|pm)/) else { return nil }
         var hour = Int(tm.1) ?? 0
-        let minute = Int(tm.2) ?? 0
+        let minute = tm.2.flatMap { Int($0) } ?? 0
         if tm.3 == "pm" && hour != 12 { hour += 12 }
         if tm.3 == "am" && hour == 12 { hour = 0 }
 
