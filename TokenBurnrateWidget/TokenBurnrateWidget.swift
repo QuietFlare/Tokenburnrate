@@ -85,17 +85,20 @@ struct SmallView: View {
                 VStack(spacing: 4) {
                     ZStack {
                         Circle().stroke(Theme.track, lineWidth: 6)
-                        Circle()
-                            .trim(from: 0, to: stats.displaySessionFraction)
-                            .stroke(Theme.clay, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                        Text("\(Int((stats.displaySessionFraction * 100).rounded()))%")
+                        if stats.official != nil {
+                            Circle()
+                                .trim(from: 0, to: stats.displaySessionFraction)
+                                .stroke(Theme.clay, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                        }
+                        Text(stats.official != nil
+                             ? "\(Int((stats.displaySessionFraction * 100).rounded()))%" : "—")
                             .font(.system(size: 14, weight: .medium))
                             .monospacedDigit()
-                            .foregroundStyle(Theme.clay)
+                            .foregroundStyle(stats.official != nil ? Theme.clay : Theme.textMuted)
                     }
                     .frame(width: 56, height: 56)
-                    Text(resetsText(stats))
+                    Text(stats.official != nil ? resetsText(stats) : "no data yet")
                         .font(.system(size: 10))
                         .foregroundStyle(Theme.textMuted)
                 }

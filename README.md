@@ -56,7 +56,7 @@ The app icon is generated from source: `swift Tools/makeicon.swift icon-1024.png
 
 ## Caveats
 
-This reads undocumented local files and CLI output. If Anthropic changes either, the app degrades gracefully (rings fall back to token-based estimates) but may need an update to show official numbers again.
+This reads undocumented local files and CLI output. If Anthropic changes either, the wheels show a "usage data not available" state (never estimates) until the app is updated; the transcript-based stats below them keep working.
 
 Not affiliated with Anthropic. "Claude" is a trademark of Anthropic, used here only to describe compatibility.
 

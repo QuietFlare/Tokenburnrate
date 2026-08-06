@@ -250,6 +250,24 @@ public struct RingsRow: View {
     }
 
     public var body: some View {
+        if stats.official == nil {
+            VStack(spacing: 4) {
+                Text("usage data not available")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Theme.textSecondary)
+                Text("start a claude session and it refreshes")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Theme.tipBackground, in: RoundedRectangle(cornerRadius: 8))
+        } else {
+            rings
+        }
+    }
+
+    private var rings: some View {
         HStack(spacing: 8) {
             if let modelFraction = stats.displayWeekModelFraction {
                 RingGauge(
