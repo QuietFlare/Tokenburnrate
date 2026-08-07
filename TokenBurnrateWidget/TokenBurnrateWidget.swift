@@ -92,7 +92,7 @@ struct SmallView: View {
                                 .rotationEffect(.degrees(-90))
                         }
                         Text(stats.official != nil
-                             ? "\(Int((stats.displaySessionFraction * 100).rounded()))%" : "—")
+                             ? "\(Int((stats.displaySessionFraction * 100).rounded()))%" : "n/a")
                             .font(.system(size: 14, weight: .medium))
                             .monospacedDigit()
                             .foregroundStyle(stats.official != nil ? Theme.clay : Theme.textMuted)
