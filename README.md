@@ -1,6 +1,6 @@
 # TokenBurnrate for Claude
 
-A macOS **desktop widget** that shows your Claude Code usage at a glance — session and weekly limits, how fast you're burning through them, and which of your sessions ate the most tokens today.
+A macOS **desktop widget** that shows your Claude Code usage at a glance: session and weekly limits, how fast you're burning through them, and which of your sessions ate the most tokens today.
 
 ![TokenBurnrate widgets in large, medium and small sizes](docs/widgets.png)
 
@@ -8,16 +8,16 @@ Every other Claude usage tracker lives in the menu bar. This one sits on your de
 
 ## What it shows
 
-**Three wheels — every limit that can cut you off:**
+**Three wheels, one for every limit that can cut you off:**
 - Fable/Opus weekly limit
 - All-models weekly limit
 - Current 5-hour session window
 
-Each with its exact reset time ("resets Aug 6 13:59"), pulled from the same source Claude Code's own `/usage` screen uses — not estimates.
+Each with its exact reset time ("resets Aug 6 13:59"), pulled from the same source Claude Code's own `/usage` screen uses. Not estimates.
 
 **Today:** a live token-burn sparkline with an hourly time axis.
 
-**Top sessions today:** which conversations are eating your budget, ranked. This is the one nobody else has — it turns "I'm at 70%" into "the secret-scan session is why."
+**Top sessions today:** which conversations are eating your budget, ranked. This is the one nobody else has. It turns "I'm at 70%" into "the secret-scan session is why."
 
 **Smart tip** (in the app): notices when one model dominates your burn and suggests dropping to a cheaper one to stretch the week.
 
