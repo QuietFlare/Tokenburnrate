@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var loading = true
     @State private var watcher: ClaudeWatcher?
     @AppStorage("statsTab") private var tab: StatsTab = .sessions
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         VStack(spacing: 14) {
@@ -46,7 +47,11 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, minHeight: 200)
                     .foregroundStyle(Theme.textSecondary)
             } else {
-                RingsRow(stats: stats)
+                RingsRow(stats: stats, onReauth: signIn)
+
+                if stats.official != nil, let failure = stats.fetchFailure {
+                    FetchFailureBanner(failure: failure, onReauth: signIn)
+                }
 
                 if let tip = stats.smartTip {
                     Text(tip)
@@ -91,6 +96,17 @@ struct ContentView: View {
                 refresh(silent: true)
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            // Coming back from the sign-in Terminal is the moment a retry can succeed,
+            // and the failure back-off would otherwise hold it off for five minutes.
+            if phase == .active, stats.fetchFailure != nil {
+                refresh(silent: true, forceOfficial: true)
+            }
+        }
+    }
+
+    func signIn() {
+        Reauth.launch()
     }
 
     var tabSwitcher: some View {
@@ -160,9 +176,13 @@ struct ContentView: View {
     func refresh(silent: Bool = false, forceOfficial: Bool = false) {
         if !silent { loading = true }
         Task.detached(priority: .userInitiated) {
-            if forceOfficial || OfficialUsage.cacheAge > 300 {
-                if let official = OfficialUsage.fetchViaCLI() {
+            if forceOfficial || OfficialUsage.shouldAttemptFetch() {
+                switch OfficialUsage.fetchViaCLI() {
+                case .success(let official):
                     official.save()
+                    OfficialUsage.clearFailure()
+                case .failure(let failure):
+                    OfficialUsage.record(failure)
                 }
             }
             let fresh = UsageParser.loadStats()

@@ -219,15 +219,72 @@ public struct RingGauge: View {
     }
 }
 
+public struct SignInButton: View {
+    let action: () -> Void
+
+    public init(action: @escaping () -> Void) { self.action = action }
+
+    public var body: some View {
+        Button(action: action) {
+            Text("Sign in to Claude Code")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Theme.textBright)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Theme.clay, in: RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help("Opens Terminal and runs: claude auth login")
+    }
+}
+
+/// Shown when the rings still hold a usable reading but refreshes have started
+/// failing, so the numbers are believable now and will quietly rot if ignored.
+public struct FetchFailureBanner: View {
+    let failure: OfficialUsage.FetchFailure
+    let onReauth: (() -> Void)?
+
+    public init(failure: OfficialUsage.FetchFailure, onReauth: (() -> Void)? = nil) {
+        self.failure = failure
+        self.onReauth = onReauth
+    }
+
+    public var body: some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(failure.headline)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Theme.amber)
+                Text("showing the last reading · \(failure.hint)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            if failure == .signedOut, let onReauth {
+                SignInButton(action: onReauth)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(Theme.tipBackground, in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
 public struct RingsRow: View {
     let stats: UsageStats
     let ringSize: CGFloat
     let liveCountdown: Bool
+    /// Supplied by the app only. A widget cannot start an interactive sign-in, so
+    /// there it stays nil and the hint text carries the instruction instead.
+    let onReauth: (() -> Void)?
 
-    public init(stats: UsageStats, ringSize: CGFloat = 72, liveCountdown: Bool = false) {
+    public init(stats: UsageStats, ringSize: CGFloat = 72, liveCountdown: Bool = false,
+                onReauth: (() -> Void)? = nil) {
         self.stats = stats
         self.ringSize = ringSize
         self.liveCountdown = liveCountdown
+        self.onReauth = onReauth
     }
 
     private var sessionSublabel: Text {
@@ -251,20 +308,30 @@ public struct RingsRow: View {
 
     public var body: some View {
         if stats.official == nil {
-            VStack(spacing: 4) {
-                Text("usage data not available")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Theme.textSecondary)
-                Text("start a claude session and it refreshes")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.textMuted)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Theme.tipBackground, in: RoundedRectangle(cornerRadius: 8))
+            unavailable
         } else {
             rings
         }
+    }
+
+    private var unavailable: some View {
+        VStack(spacing: 4) {
+            Text(stats.fetchFailure?.headline ?? "usage data not available")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(stats.needsReauth ? Theme.amber : Theme.textSecondary)
+                .multilineTextAlignment(.center)
+            Text(stats.fetchFailure?.hint ?? "start a claude session and it refreshes")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.textMuted)
+                .multilineTextAlignment(.center)
+            if stats.needsReauth, let onReauth {
+                SignInButton(action: onReauth).padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 12)
+        .background(Theme.tipBackground, in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var rings: some View {

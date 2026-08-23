@@ -49,9 +49,13 @@ public struct UsageStats: Codable {
     public var weeklyFableOpusTokens: Int = 0
     public var nextWeeklyReset: Date?
     public var official: OfficialUsage?
+    public var fetchFailure: OfficialUsage.FetchFailure?
     public var generatedAt: Date = .now
 
     public init() {}
+
+    /// Only a sign-in can clear this one, and only the user can perform it.
+    public var needsReauth: Bool { fetchFailure == .signedOut }
 
     public var displaySessionFraction: Double {
         if let o = official { return Double(o.sessionPercent) / 100 }

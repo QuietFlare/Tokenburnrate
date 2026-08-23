@@ -113,7 +113,15 @@ public enum UsageParser {
             stats.weeklyFableOpusTokens += record.fo
         }
 
-        stats.official = OfficialUsage.loadCached()
+        // A rolled-over window describes nothing current, so drop it rather than let
+        // the rings keep drawing an old reading as if it were today's.
+        let cached = OfficialUsage.loadCached()
+        stats.official = cached.flatMap { $0.isExpired ? nil : $0 }
+        // A reading fetched after the failure supersedes it — including one written by
+        // another copy of the app — so a problem that has resolved stops being reported.
+        if let status = OfficialUsage.loadStatus(), status.at > (cached?.fetchedAt ?? .distantPast) {
+            stats.fetchFailure = status.failure
+        }
         return stats
     }
 
